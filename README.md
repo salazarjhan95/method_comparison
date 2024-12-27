@@ -7,6 +7,6 @@ For this paper, I did a few cool figures. Here are the codes I used for each of 
 ## Figures
 Figure 1 is a scatterplot while Figure 2 is a boxplox
   
-  Figure1_Density.R
+  Figure1_Density.R; this one also have the bootstrap analysis
   
   Figure2_Scatterplot.R
