@@ -1,0 +1,779 @@
+---
+title: "bootstrapping_methodComparison"
+format:
+  html: default
+  pdf: default
+editor: visual
+execute:
+  echo: true
+  warning: true
+  error: true
+---
+
+## Comparing the methods that I used to measure CTmin and CTmax in 2016-2017
+
+and 2022:
+
+Packages and working directory
+
+```{r}
+library(lme4)
+library(cowplot)
+library(boot)
+library(ggplot2)
+```
+
+```{r}
+setwd("C:/Users/jhanc/Box/PhD/Classes_per_year/Sixth year/Machine learning
+      /Final_Project")
+
+lizard_data <- read.csv("finalLizard_data.csv", header=TRUE) 
+head(lizard_data)
+```
+
+Let's do a bootstrap for CTmin to check how the coefficients change for both methods, in this part we're going to use the raw data for CTmin
+
+```{r}
+# Define a function to calculate slope
+slope_fn <- function(lizard_data, indices) {
+  d <- lizard_data[indices, ]
+  model <- lm(CTmin ~ Elevation, data = d)
+  return(coef(model)[2])  # Return the slope
+}
+
+# Bootstrapping for each year
+set.seed(123)
+boot_M1 <- boot(lizard_data[lizard_data$Method == "M1", ], slope_fn, R = 10000)
+boot_M2 <- boot(lizard_data[lizard_data$Method == "M2", ], slope_fn, R = 10000)
+
+boot_M1
+boot_M2
+
+# Calculate confidence intervals for boot_year1
+ci_M1 <- boot.ci(boot_M1, type = "bca")
+ci_M2 <- boot.ci(boot_M2, type = "bca")
+
+# Print confidence intervals
+print(ci_M1)
+print(ci_M2)
+
+
+# Compare bootstrap distributions
+plot(boot_M1)
+plot(boot_M2)
+```
+
+Let's visualize the results from the bootstrap
+
+```{r}
+# For visualization
+# Combine bootstrap results into a data frame for plotting
+boot_data_ctmin <- data.frame(
+  slope = c(boot_M1$t, boot_M2$t),
+  method = factor(rep(c("M1", "M2"), each = 10000)))
+
+# Plotting the bootstrap distributions
+ctmin_1 <- ggplot(boot_data_ctmin, aes(x = slope, fill = method)) +
+  geom_density(alpha = 0.7, color = "black", size = 1) +
+  labs(x = "Slope") +
+  
+  ylab(expression(Density~CT[min]~("°"*C))) +
+  
+  theme_classic() +
+  scale_fill_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_color_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_y_continuous(breaks = seq(0, 2400, 400), limit = c(0, 2400)) +
+  scale_x_continuous(breaks = seq(-0.004, -0.0005, 0.001), limit = c(-0.004, 
+                                                                     -0.0005)) +
+  
+    # theme(panel.background = element_rect(fill = NA, colour = NA), 
+  #       plot.background = element_rect(fill = NA, colour = NA),
+  #       legend.key = element_rect(fill = NA, colour = NA), 
+  #       legend.background = element_rect(fill = NA, colour = NA),
+  #       legend.text=element_text(family="serif", size=15),
+  #       legend.title=element_blank(),
+  #       legend.position = c(.85, .9),
+  #       plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(legend.position = "none",
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  
+  theme(axis.text.x = element_text(family="serif", size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.text.y = element_text(family="serif",size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.title.y = element_text(family="serif",vjust=1.2, size=30)) +
+  theme(axis.title.x = element_text(family="serif",vjust=-0.5, size=30))
+
+print(ctmin_1)
+```
+
+Let's do a bootstrap for CTmax to check how the coefficients change for both methods, in this part we're going to use the raw data for CTmAX
+
+```{r}
+# Define a function to calculate slope
+slope_fn <- function(lizard_data, indices) {
+  d <- lizard_data[indices, ]
+  model <- lm(CTmax ~ Elevation, data = d)
+  return(coef(model)[2])  # Return the slope
+}
+
+# Bootstrapping for each year
+set.seed(123)
+boot_M1 <- boot(lizard_data[lizard_data$Method == "M1", ], slope_fn, R = 10000)
+boot_M2 <- boot(lizard_data[lizard_data$Method == "M2", ], slope_fn, R = 10000)
+
+boot_M1
+boot_M2
+
+# Calculate confidence intervals for boot_year1
+ci_M1 <- boot.ci(boot_M1, type = "bca")
+ci_M2 <- boot.ci(boot_M2, type = "bca")
+
+# Print confidence intervals
+print(ci_M1)
+print(ci_M2)
+
+
+# Compare bootstrap distributions
+plot(boot_M1)
+plot(boot_M2)
+
+```
+
+Let's visualize the results from the bootstrap
+
+```{r}
+# For visualization
+# Combine bootstrap results into a data frame for plotting
+boot_data_ctmax <- data.frame(
+  slope = c(boot_M1$t, boot_M2$t),
+  method = factor(rep(c("M1", "M2"), each = 10000)))
+
+# Plotting the bootstrap distributions
+ctmax_1 <- ggplot(boot_data_ctmax, aes(x = slope, fill = method)) +
+  geom_density(alpha = 0.7, color = "black", size = 1) +
+  labs(x = "Slope") +
+  
+  ylab(expression(Density~CT[max]~("°"*C))) +
+  
+  theme_classic() +
+  scale_fill_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_color_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_y_continuous(breaks = seq(0, 2650, 500), limit = c(0, 2650)) +
+  scale_x_continuous(breaks = seq(-0.005, 0, 0.001), limit = c(-0.005, 0)) +
+  
+  theme(legend.position = "none",
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(axis.text.x = element_text(family="serif", size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.text.y = element_text(family="serif",size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.title.y = element_text(family="serif",vjust=1.2, size=30)) +
+  theme(axis.title.x = element_text(family="serif",vjust=-0.5, size=30))
+
+print(ctmax_1)
+```
+
+Let's use the standarized data for CTmin and CTmax now
+
+```{r}
+data_M1 <- lizard_data[lizard_data$Method == "M1", ]
+data_M2 <- lizard_data[lizard_data$Method == "M2", ]
+
+# Standardize `x` and `y` within each year
+data_M1$CTmin_std <- scale(data_M1$CTmin)
+data_M1$CTmax_std <- scale(data_M1$CTmax)
+data_M2$CTmin_std <- scale(data_M2$CTmin)
+data_M2$CTmax_std <- scale(data_M2$CTmax)
+
+# Combine back into a single dataset
+data_std <- rbind(data_M1, data_M2)
+# data_std
+# write.csv(data_std, file = "Lizard_data_std_Nov10.csv")
+```
+
+Let's do a bootstrap for CTmin_std to check how the coefficients change for both methods, in this part we're going to use the raw data for CTmin_std
+
+```{r}
+# Define a function to calculate slope
+slope_fn <- function(data_std, indices) {
+  d <- data_std[indices, ]
+  model <- lm(CTmin_std ~ Elevation, data = d)
+  return(coef(model)[2])  # Return the slope
+}
+
+# Bootstrapping for each year
+set.seed(123)
+boot_M1 <- boot(data_std[data_std$Method == "M1", ], slope_fn, R = 10000)
+boot_M2 <- boot(data_std[data_std$Method == "M2", ], slope_fn, R = 10000)
+
+boot_M1
+boot_M2
+
+# Calculate confidence intervals for boot_year1
+ci_M1 <- boot.ci(boot_M1, type = "bca")
+ci_M2 <- boot.ci(boot_M2, type = "bca")
+
+# Print confidence intervals
+print(ci_M1)
+print(ci_M2)
+
+
+# Compare bootstrap distributions
+plot(boot_M1)
+plot(boot_M2)
+```
+
+```{r}
+# For visualization
+# Combine bootstrap results into a data frame for plotting
+boot_data_CTmin_std <- data.frame(
+  slope = c(boot_M1$t, boot_M2$t),
+  method = factor(rep(c("M1", "M2"), each = 10000)))
+
+# Plotting the bootstrap distributions
+ctmin_std_1 <- ggplot(boot_data_CTmin_std, aes(x = slope, fill = method)) +
+  geom_density(alpha = 0.7, color = "black", size = 1) +
+  labs(x = "Slope") +
+  
+  ylab(expression(Density~CT[min]~(std))) +
+  
+  theme_classic() +
+  scale_fill_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_color_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_y_continuous(breaks = seq(0, 6000, 1000), limit = c(0, 6000)) +
+  scale_x_continuous(breaks = seq(-0.0015, 0, 0.0005), limit = c(-0.0015, 0)) +
+  
+  
+  theme(panel.background = element_rect(fill = NA, colour = NA), 
+        plot.background = element_rect(fill = NA, colour = NA),
+        legend.key = element_rect(fill = NA, colour = NA), 
+        legend.background = element_rect(fill = NA, colour = NA),
+        legend.text=element_text(family="serif", size=20),
+        legend.title=element_blank(),
+        legend.position = c(.82, .90),
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+
+  
+  theme(axis.text.x = element_text(family="serif", size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.text.y = element_text(family="serif",size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.title.y = element_text(family="serif",vjust=1.2, size=30)) +
+  theme(axis.title.x = element_text(family="serif",vjust=-0.5, size=30))
+
+print(ctmin_std_1)
+```
+
+Analysis for CTmax
+
+```{r}
+# Define a function to calculate slope
+slope_fn <- function(data_std, indices) {
+  d <- data_std[indices, ]
+  model <- lm(CTmax_std ~ Elevation, data = d)
+  return(coef(model)[2])  # Return the slope
+}
+
+# Bootstrapping for each year
+set.seed(123)
+boot_M1 <- boot(data_std[data_std$Method == "M1", ], slope_fn, R = 10000)
+boot_M2 <- boot(data_std[data_std$Method == "M2", ], slope_fn, R = 10000)
+
+boot_M1
+boot_M2
+
+# Calculate confidence intervals for boot_year1
+ci_M1 <- boot.ci(boot_M1, type = "bca")
+ci_M2 <- boot.ci(boot_M2, type = "bca")
+
+# Print confidence intervals
+print(ci_M1)
+print(ci_M2)
+
+
+# Compare bootstrap distributions
+plot(boot_M1)
+plot(boot_M2)
+```
+
+```{r}
+# For visualization
+# Combine bootstrap results into a data frame for plotting
+boot_data_CTmax_std <- data.frame(
+  slope = c(boot_M1$t, boot_M2$t),
+  method = factor(rep(c("M1", "M2"), each = 10000)))
+
+# Plotting the bootstrap distributions
+ctmax_std_1 <- ggplot(boot_data_CTmax_std, aes(x = slope, fill = method)) +
+  geom_density(alpha = 0.7, color = "black", size = 1) +
+  labs(x = "Slope") +
+  
+  ylab(expression(Density~CT[max]~(std))) +
+  
+  theme_classic() +
+  scale_fill_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_color_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_y_continuous(breaks = seq(0, 6000, 1000), limit = c(0, 6000)) +
+  scale_x_continuous(breaks = seq(-0.0015, 0, 0.0005), limit = c(-0.0015, 
+                                                                 -0.0004)) +
+  
+  # theme(panel.background = element_rect(fill = NA, colour = NA), 
+  #       plot.background = element_rect(fill = NA, colour = NA),
+  #       legend.key = element_rect(fill = NA, colour = NA), 
+  #       legend.background = element_rect(fill = NA, colour = NA),
+  #       legend.text=element_text(family="serif", size=15),
+  #       legend.title=element_blank(),
+  #       legend.position = c(.85, .9),
+  #       plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(legend.position = "none",
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(axis.text.x = element_text(family="serif", size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.text.y = element_text(family="serif",size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.title.y = element_text(family="serif",vjust=1.2, size=30)) +
+  theme(axis.title.x = element_text(family="serif",vjust=-0.5, size=30))
+
+print(ctmax_std_1)
+```
+
+```{r}
+# png("Comparison_All_Nov09.png", height = 9, width = 14, units = "in", res = 300)
+# plot_grid(ctmin_1, ctmax_1,  ctmin_std_1, ctmax_std_1,
+#           labels = c("(a)", "(b)", "(c)", "(d)"),
+#           ncol = 2, nrow = 2, label_fontfamily = "serif", label_size = 23,
+#           label_y = 1.01, label_x = -0.02, label_fontface = "bold")
+# 
+# dev.off()
+
+```
+
+Let's run it now excluding the localities that are not share between years (e.g., Anchicaya, Tabio and La Sierpe)
+
+```{r}
+lizard_data_3pop <- read.csv("Lizard_data_3pop.csv", header=TRUE) 
+head(lizard_data_3pop)
+```
+
+For CTmin
+
+```{r}
+# Define a function to calculate slope
+slope_fn <- function(lizard_data_3pop, indices) {
+  d <- lizard_data[indices, ]
+  model <- lm(CTmin ~ Elevation, data = d)
+  return(coef(model)[2])  # Return the slope
+}
+
+# Bootstrapping for each year
+set.seed(123)
+boot_M1 <- boot(lizard_data_3pop[lizard_data_3pop$Method == "M1", ], slope_fn, 
+                R = 10000)
+boot_M2 <- boot(lizard_data_3pop[lizard_data_3pop$Method == "M2", ], slope_fn, 
+                R = 10000)
+
+boot_M1
+boot_M2
+
+# Calculate confidence intervals for boot_year1
+ci_M1 <- boot.ci(boot_M1, type = "bca")
+ci_M2 <- boot.ci(boot_M2, type = "bca")
+
+# Print confidence intervals
+print(ci_M1)
+print(ci_M2)
+
+
+# Compare bootstrap distributions
+plot(boot_M1)
+plot(boot_M2)
+```
+
+Let's visualize the results from the bootstrap
+
+```{r}
+# For visualization
+# Combine bootstrap results into a data frame for plotting
+boot_data_CTmin_3pop <- data.frame(
+  slope = c(boot_M1$t, boot_M2$t),
+  method = factor(rep(c("M1", "M2"), each = 10000)))
+
+# Plotting the bootstrap distributions
+ctmin <- ggplot(boot_data_CTmin_3pop, aes(x = slope, fill = method)) +
+  geom_density(alpha = 0.7, color = "black", size = 1) +
+  labs(x = "Slope") +
+  
+  ylab(expression(Density~CT[min]~("°"*C))) +
+  
+  theme_classic() +
+  scale_fill_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_color_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_y_continuous(breaks = seq(0, 2400, 400), limit = c(0, 2400)) +
+  scale_x_continuous(breaks = seq(-0.003, -0.001, 0.0005), limit = c(-0.003, 
+                                                                     -0.001)) +
+  
+  # theme(panel.background = element_rect(fill = NA, colour = NA), 
+  #       plot.background = element_rect(fill = NA, colour = NA),
+  #       legend.key = element_rect(fill = NA, colour = NA), 
+  #       legend.background = element_rect(fill = NA, colour = NA),
+  #       legend.text=element_text(family="serif", size=15),
+  #       legend.title=element_blank(),
+  #       legend.position = c(.85, .9),
+  #       plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(legend.position = "none",
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(axis.text.x = element_text(family="serif", size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.text.y = element_text(family="serif",size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.title.y = element_text(family="serif",vjust=1.2, size=30)) +
+  theme(axis.title.x = element_text(family="serif",vjust=-0.5, size=30))
+
+print(ctmin)
+```
+
+For CTmax
+
+```{r}
+# Define a function to calculate slope
+slope_fn <- function(lizard_data_3pop, indices) {
+  d <- lizard_data[indices, ]
+  model <- lm(CTmax ~ Elevation, data = d)
+  return(coef(model)[2])  # Return the slope
+}
+
+# Bootstrapping for each year
+set.seed(123)
+boot_M1 <- boot(lizard_data_3pop[lizard_data_3pop$Method == "M1", ], slope_fn, 
+                R = 10000)
+boot_M2 <- boot(lizard_data_3pop[lizard_data_3pop$Method == "M2", ], slope_fn, 
+                R = 10000)
+
+boot_M1
+boot_M2
+
+# Calculate confidence intervals for boot_year1
+ci_M1 <- boot.ci(boot_M1, type = "bca")
+ci_M2 <- boot.ci(boot_M2, type = "bca")
+
+# Print confidence intervals
+print(ci_M1)
+print(ci_M2)
+
+
+# Compare bootstrap distributions
+plot(boot_M1)
+plot(boot_M2)
+```
+
+Let's visualize the results from the bootstrap
+
+```{r}
+# For visualization
+# Combine bootstrap results into a data frame for plotting
+boot_data_CTmax_3pop <- data.frame(
+  slope = c(boot_M1$t, boot_M2$t),
+  method = factor(rep(c("M1", "M2"), each = 10000)))
+
+# Plotting the bootstrap distributions
+ctmax <- ggplot(boot_data_CTmax_3pop, aes(x = slope, fill = method)) +
+  geom_density(alpha = 0.7, color = "black", size = 1) +
+  labs(x = "Slope") +
+  
+  ylab(expression(Density~CT[max]~("°"*C))) +
+  
+  theme_classic() +
+  scale_fill_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_color_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_y_continuous(breaks = seq(0, 2800, 400), limit = c(0, 2800)) +
+  scale_x_continuous(breaks = seq(-0.002, -0.0005, 0.0005), limit = c(-0.002, 
+                                                                      -0.0005)) +
+  
+  # theme(panel.background = element_rect(fill = NA, colour = NA), 
+  #       plot.background = element_rect(fill = NA, colour = NA),
+  #       legend.key = element_rect(fill = NA, colour = NA), 
+  #       legend.background = element_rect(fill = NA, colour = NA),
+  #       legend.text=element_text(family="serif", size=12),
+  #       legend.title=element_blank(),
+  #       legend.position = c(.85, .9),
+  #       plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  # 
+    theme(legend.position = "none",
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(axis.text.x = element_text(family="serif", size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.text.y = element_text(family="serif",size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.title.y = element_text(family="serif",vjust=1.2, size=30)) +
+  theme(axis.title.x = element_text(family="serif",vjust=-0.5, size=30))
+
+print(ctmax)
+```
+
+Let's use the standarized data for CTmin and CTmax now
+
+```{r}
+data_M1 <- lizard_data_3pop[lizard_data_3pop$Method == "M1", ]
+data_M2 <- lizard_data_3pop[lizard_data_3pop$Method == "M2", ]
+
+# Standardize `x` and `y` within each year
+data_M1$CTmin_std <- scale(data_M1$CTmin)
+data_M1$CTmax_std <- scale(data_M1$CTmax)
+data_M2$CTmin_std <- scale(data_M2$CTmin)
+data_M2$CTmax_std <- scale(data_M2$CTmax)
+
+# Combine back into a single dataset
+data_std_3pop <- rbind(data_M1, data_M2)
+# data_std_3pop
+```
+
+```{r}
+# Define a function to calculate slope
+slope_fn <- function(data_std_3pop, indices) {
+  d <- data_std_3pop[indices, ]
+  model <- lm(CTmin_std ~ Elevation, data = d)
+  return(coef(model)[2])  # Return the slope
+}
+
+# Bootstrapping for each year
+set.seed(123)
+boot_M1 <- boot(data_std_3pop[data_std_3pop$Method == "M1", ], slope_fn, 
+                R = 10000)
+boot_M2 <- boot(data_std_3pop[data_std_3pop$Method == "M2", ], slope_fn, 
+                R = 10000)
+
+boot_M1
+boot_M2
+
+# Calculate confidence intervals for boot_year1
+ci_M1 <- boot.ci(boot_M1, type = "bca")
+ci_M2 <- boot.ci(boot_M2, type = "bca")
+
+# Print confidence intervals
+print(ci_M1)
+print(ci_M2)
+
+
+# Compare bootstrap distributions
+plot(boot_M1)
+plot(boot_M2)
+```
+
+Let's visualize the results from the bootstrap
+
+```{r}
+# For visualization
+# Combine bootstrap results into a data frame for plotting
+boot_data_CTmin_3pop_std <- data.frame(
+  slope = c(boot_M1$t, boot_M2$t),
+  method = factor(rep(c("M1", "M2"), each = 10000)))
+
+# Plotting the bootstrap distributions
+ctmin_std <- ggplot(boot_data_CTmin_3pop_std, aes(x = slope, fill = method)) +
+  geom_density(alpha = 0.7, color = "black", size = 1) +
+  labs(x = "Slope") +
+  
+  ylab(expression(Density~CT[min]~(std))) +
+  
+  theme_classic() +
+  scale_fill_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_color_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_y_continuous(breaks = seq(0, 2800, 400), limit = c(0, 2800)) +
+  scale_x_continuous(breaks = seq(-0.002, 0.001, 0.001), limit = c(-0.002, 
+                                                                   0.001)) +
+  
+  # theme(panel.background = element_rect(fill = NA, colour = NA), 
+  #       plot.background = element_rect(fill = NA, colour = NA),
+  #       legend.key = element_rect(fill = NA, colour = NA), 
+  #       legend.background = element_rect(fill = NA, colour = NA),
+  #       legend.text=element_text(family="serif", size=15),
+  #       legend.title=element_blank(),
+  #       legend.position = c(.85, .9),
+  #       plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(legend.position = "none",
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(axis.text.x = element_text(family="serif", size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.text.y = element_text(family="serif",size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.title.y = element_text(family="serif",vjust=1.2, size=30)) +
+  theme(axis.title.x = element_text(family="serif",vjust=-0.5, size=30))
+
+print(ctmin_std)
+```
+
+For CTmax
+
+```{r}
+# Define a function to calculate slope
+slope_fn <- function(data_std_3pop, indices) {
+  d <- data_std_3pop[indices, ]
+  model <- lm(CTmax_std ~ Elevation, data = d)
+  return(coef(model)[2])  # Return the slope
+}
+
+# Bootstrapping for each year
+set.seed(123)
+boot_M1 <- boot(data_std_3pop[data_std_3pop$Method == "M1", ], slope_fn, 
+                R = 10000)
+boot_M2 <- boot(data_std_3pop[data_std_3pop$Method == "M2", ], slope_fn, 
+                R = 10000)
+
+boot_M1
+boot_M2
+
+# Calculate confidence intervals for boot_year1
+ci_M1 <- boot.ci(boot_M1, type = "bca")
+ci_M2 <- boot.ci(boot_M2, type = "bca")
+
+# Print confidence intervals
+print(ci_M1)
+print(ci_M2)
+
+
+# Compare bootstrap distributions
+plot(boot_M1)
+plot(boot_M2)
+```
+
+Let's visualize the results from the bootstrap
+
+```{r}
+# For visualization
+# Combine bootstrap results into a data frame for plotting
+boot_data_CTmax_3pop_std <- data.frame(
+  slope = c(boot_M1$t, boot_M2$t),
+  method = factor(rep(c("M1", "M2"), each = 10000)))
+
+# Plotting the bootstrap distributions
+ctmax_std <- ggplot(boot_data_CTmax_3pop_std, aes(x = slope, fill = method)) +
+  geom_density(alpha = 0.7, color = "black", size = 1) +
+  labs(x = "Slope") +
+  
+  ylab(expression(Density~CT[max]~(std))) +
+  
+  theme_classic() +
+  scale_fill_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_color_manual(values=c("#EF8354", "#4F5D75"),
+                     breaks = c("M1", "M2"),
+                     labels = c(expression(bold("M1;")~"2016-2017"), 
+                               expression(bold("M2;")~"2022"))) +
+  
+  scale_y_continuous(breaks = seq(0, 2600, 400), limit = c(0, 2600)) +
+  scale_x_continuous(breaks = seq(-0.002, 0, 0.001), limit = c(-0.002, 0)) +
+  
+  # theme(panel.background = element_rect(fill = NA, colour = NA), 
+  #       plot.background = element_rect(fill = NA, colour = NA),
+  #       legend.key = element_rect(fill = NA, colour = NA), 
+  #       legend.background = element_rect(fill = NA, colour = NA),
+  #       legend.text=element_text(family="serif", size=15),
+  #       legend.title=element_blank(),
+  #       legend.position = c(.85, .9),
+  #       plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(legend.position = "none",
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")) +
+  
+  theme(axis.text.x = element_text(family="serif", size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.text.y = element_text(family="serif",size = 22, lineheight = 0.9, 
+                                   vjust = 1)) +
+  theme(axis.title.y = element_text(family="serif",vjust=1.2, size=30)) +
+  theme(axis.title.x = element_text(family="serif",vjust=-0.5, size=30))
+
+print(ctmax_std)
+```
+
+```{r}
+# png("Comparison_3Pop_Nov09.png", height = 9, width = 14, units = "in", res = 300)
+# plot_grid(ctmin, ctmax,  ctmin_std, ctmax_std,
+#           labels = c("(a)", "(b)", "(c)","(d)"),
+#           ncol = 2, nrow = 2, label_fontfamily = "serif", label_size = 23,
+#           label_y = 1.01, label_x = -0.02, label_fontface = "bold")
+# 
+# dev.off()
+```
+
+```{r}
+# png("Comparison_All_Nov27.png", height = 20, width = 14, units = "in", res = 300)
+# plot_grid(ctmin_1, ctmin_std_1, ctmax_1,  ctmax_std_1,
+#           ctmin, ctmin_std, ctmax,  ctmax_std,
+#           labels = c("(a)", "(b)", "(c)", "(d)",
+#                      "(e)", "(f)", "(g)","(h)"),
+#           ncol = 2, nrow = 4, label_fontfamily = "serif", label_size = 23,
+#           label_y = 1.01, label_x = -0.02, label_fontface = "bold")
+# 
+# dev.off()
+```
